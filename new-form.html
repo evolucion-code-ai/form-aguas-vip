@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -383,8 +383,8 @@
         </div>
 
         <div class="form-content">
-            <h2 class="form-title">Ruta de Entrega de Productos</h2>
-            <p class="form-subtitle">Registrar métricas de entrega para la ruta escaneada</p>
+            <h2 class="form-title">Product Delivery Route</h2>
+            <p class="form-subtitle">Register delivery metrics for the scanned route</p>
 
             <div id="mensaje" class="mensaje"></div>
             <div id="loading" class="loading">
@@ -392,33 +392,34 @@
                 <p style="margin-top: 15px; color: #666;">Processing and redirecting to WhatsApp...</p>
             </div>
 
-            <form id="formulario">
+            <form id="formulario" action="https://script.google.com/macros/s/AKfycbx4bozbCjX2jmfS_iv6tln4YIHcA84ICUaPDLn52njo3Wpate6bFTRkHxHjkyv7ZkEOBA/exec" method="POST">
                 
                 <div class="form-group">
-                    <label for="route_id">ID de Ruta (Auto-completado por QR) <span class="required">*</span></label>
+                    <label for="route_id">Route ID (Auto-filled by QR) <span class="required">*</span></label>
                     <input type="text" id="route_id" name="route_id" placeholder="Scanning error" required readonly>
                 </div>
 
                 <div class="form-group">
-                    <label for="full_delivered"> Botellones Llenos Entregados <span class="required">*</span></label>
+                    <label for="full_delivered">Full Bottles Delivered <span class="required">*</span></label>
                     <input type="number" id="full_delivered" name="full_delivered" min="0" placeholder="E.g. 15" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="empty_returned"> Botellones Vacíos Retirados <span class="required">*</span></label>
+                    <label for="empty_returned">Empty Bottles Returned <span class="required">*</span></label>
                     <input type="number" id="empty_returned" name="empty_returned" min="0" placeholder="E.g. 12" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="payment">Método de Pago <span class="required">*</span></label>
+                    <label for="payment">Payment Method <span class="required">*</span></label>
                     <select id="payment" name="payment" required>
-                        <option value="">Seleccione una opción</option>
-                        <option value="Cash">💵 Efectivo</option>
-                        <option value="Transfer">🏦 Transferencia / Depósito</option>
+                        <option value="">Select an option</option>
+                        <option value="Cash">💵 Cash</option>
+                        <option value="Transfer">🏦 Bank Transfer</option>
                     </select>
                 </div>
 
-                <button type="submit" class="submit-btn" id="btnEnviar"> REGISTRAR ENTREGA </button>
+                <button type="submit" class="submit-btn" id="btnEnviar">REGISTER DELIVERY</button>
+            
             </form>
         </div>
     </div>
@@ -426,7 +427,7 @@
     <script>
         // Replace with your actual Google Apps Script Web App URL
         const SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_URL_HERE'; 
-        const WHATSAPP_NUMBER = '3515631347'; // Default WhatsApp number
+        const WHATSAPP_NUMBER = '1167401640'; // Default WhatsApp number
 
         // Function to extract URL parameters (simulating QR Code scan data)
         function getURLParameter(name) {
@@ -480,15 +481,15 @@
 
                 // Generate WhatsApp formatting
                 const mensajeWhatsApp = 
-                    '🚚 *NUEVA ENTREGA REGISTRADA*' + '%0A%0A' +
+                    '🚚 *NEW DELIVERY REGISTERED*' + '%0A%0A' +
                     '📍 *Route ID:* ' + datos.route_id + '%0A' +
-                    '💧 *Bidones llenos entregados:* ' + datos.full_delivered + '%0A' +
-                    '♻️ *Bidones Vacíos Devueltos:* ' + datos.empty_returned + '%0A' +
-                    '💳 *Metodos de Pago:* ' + datos.payment;
+                    '💧 *Full Delivered:* ' + datos.full_delivered + '%0A' +
+                    '♻️ *Empty Returned:* ' + datos.empty_returned + '%0A' +
+                    '💳 *Payment Method:* ' + datos.payment;
 
                 const urlWhatsApp = `https://wa.me/${WHATSAPP_NUMBER}?text=${mensajeWhatsApp}`;
 
-                mostrarMensaje('exito', '✅ Entrega Cargada Exitosamente! Redirecting to WhatsApp...');
+                mostrarMensaje('exito', '✅ Delivery logged successfully! Redirecting to WhatsApp...');
 
                 // Redirect after a brief delay
                 setTimeout(() => {
@@ -497,7 +498,7 @@
 
             } catch (error) {
                 console.error('Submission Error:', error);
-                mostrarMensaje('error', '❌ Ah occurrido un error mientras cargaba el formulario. Por favor vuelva a intentar.');
+                mostrarMensaje('error', '❌ An error occurred while submitting the form. Please try again.');
                 loading.style.display = 'none';
                 formulario.style.display = 'block';
                 btnEnviar.disabled = false;
@@ -512,9 +513,4 @@
         }
     </script>
 </body>
-
 </html>
-
-
-
-
