@@ -452,53 +452,48 @@
         const mensaje = document.getElementById('mensaje');
         const btnEnviar = document.getElementById('btnEnviar');
 
-        formulario.addEventListener('submit', async (e) => {
+formulario.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Gather Form Data
-            const datos = {
-                route_id: document.getElementById('route_id').value,
-                full_delivered: document.getElementById('full_delivered').value,
-                empty_returned: document.getElementById('empty_returned').value,
-                payment: document.getElementById('payment').value
-            };
-
-            // Display loading animation
+            // Mostramos la animación de carga
             formulario.style.display = 'none';
             loading.style.display = 'block';
             btnEnviar.disabled = true;
 
+            // Preparamos los datos en el formato que Google Apps Script ama
+            const formData = new URLSearchParams();
+            formData.append('route_id', document.getElementById('route_id').value);
+            formData.append('full_delivered', document.getElementById('full_delivered').value);
+            formData.append('empty_returned', document.getElementById('empty_returned').value);
+            formData.append('payment', document.getElementById('payment').value);
+
             try {
-                // Send data to Google Apps Script
-                const response = await fetch(SCRIPT_URL, {
+                // Enviamos los datos usando la URL que pusiste en el 'action' de tu formulario
+                const response = await fetch(formulario.action, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(datos)
+                    body: formData
                 });
 
-                // Generate WhatsApp formatting
+                // Preparamos el mensaje para WhatsApp
                 const mensajeWhatsApp = 
-                    '🚚 *NEW DELIVERY REGISTERED*' + '%0A%0A' +
-                    '📍 *Route ID:* ' + datos.route_id + '%0A' +
-                    '💧 *Full Delivered:* ' + datos.full_delivered + '%0A' +
-                    '♻️ *Empty Returned:* ' + datos.empty_returned + '%0A' +
-                    '💳 *Payment Method:* ' + datos.payment;
+                    '🚚 *NUEVA ENTREGA REGISTRADA*' + '%0A%0A' +
+                    '📍 *ID Ruta:* ' + document.getElementById('route_id').value + '%0A' +
+                    '💧 *Llenos Entregados:* ' + document.getElementById('full_delivered').value + '%0A' +
+                    '♻️ *Vacíos Retirados:* ' + document.getElementById('empty_returned').value + '%0A' +
+                    '💳 *Método de Pago:* ' + document.getElementById('payment').value;
 
                 const urlWhatsApp = `https://wa.me/${WHATSAPP_NUMBER}?text=${mensajeWhatsApp}`;
 
-                mostrarMensaje('exito', '✅ Delivery logged successfully! Redirecting to WhatsApp...');
+                mostrarMensaje('exito', '✅ ¡Entrega registrada con éxito! Redirigiendo a WhatsApp...');
 
-                // Redirect after a brief delay
+                // Redirigimos después de un breve momento
                 setTimeout(() => {
                     window.location.href = urlWhatsApp;
                 }, 1500);
 
             } catch (error) {
-                console.error('Submission Error:', error);
-                mostrarMensaje('error', '❌ An error occurred while submitting the form. Please try again.');
+                console.error('Error al enviar:', error);
+                mostrarMensaje('error', '❌ Ocurrió un error al guardar en la planilla. Intenta de nuevo.');
                 loading.style.display = 'none';
                 formulario.style.display = 'block';
                 btnEnviar.disabled = false;
