@@ -467,10 +467,11 @@
 
     <script>
         // ============================================================
-        // CONFIGURACIÓN — Reemplazá la URL con la de tu Google Apps Script
+        // CONFIGURACIÓN
         // ============================================================
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4bozbCjX2jmfS_iv6tln4YIHcA84ICUaPDLn52njo3Wpate6bFTRkHxHjkyv7ZkEOBA/exec';
-        const WHATSAPP_NUMBER = '1167401640'; // Número de WhatsApp destino
+        // *** IMPORTANTE: pegá acá la URL de tu deployment activo ***
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTTE-dfPnauwl6PXXtxNFdezjg7MnWVg2jFyCK3CFs0W9KU1cbemlPCrASV_1gf0jw9A/exec';
+        const WHATSAPP_NUMBER = '1167401640';
 
         // ------------------------------------------------------------
         // Lee parámetros de la URL (datos del QR)
@@ -494,78 +495,63 @@
         const mensaje    = document.getElementById('mensaje');
         const btnEnviar  = document.getElementById('btnEnviar');
 
-        formulario.addEventListener('submit', async (e) => {
+        formulario.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // Armar objeto con los nombres EXACTOS de las columnas de la planilla
-            const datos = {
-                "ID Ruta"           : document.getElementById('ID_Ruta').value,
-                "Id Nota Entrega"   : document.getElementById('Id_Nota_Entrega').value,
-                "Cliente"           : document.getElementById('Cliente').value,
-                "Producto"          : document.getElementById('Producto').value,
-                "Cantidad"          : document.getElementById('Cantidad').value,
-                "Pagos"             : document.getElementById('Pagos').value,
-                "Bidone Entregados" : document.getElementById('Bidone_Entregados').value,
-                "Bidone Recibidos"  : document.getElementById('Bidone_Recibidos').value
-            };
+            // ── 1. Recolectar datos ─────────────────────────────
+            var idRuta          = document.getElementById('ID_Ruta').value;
+            var idNota          = document.getElementById('Id_Nota_Entrega').value;
+            var cliente         = document.getElementById('Cliente').value;
+            var producto        = document.getElementById('Producto').value;
+            var cantidad        = document.getElementById('Cantidad').value;
+            var pagos           = document.getElementById('Pagos').value;
+            var bidoEntregados  = document.getElementById('Bidone_Entregados').value;
+            var bidoRecibidos   = document.getElementById('Bidone_Recibidos').value;
 
-            // Mostrar spinner y deshabilitar botón
+            // ── 2. Construir URL de WhatsApp ─────────────────────
+            var nl = '%0A';
+            var msgWA =
+                '%F0%9F%9A%9A *NUEVO MOVIMIENTO REGISTRADO*'  + nl + nl +
+                '%F0%9F%93%8D *ID de Ruta:* '         + encodeURIComponent(idRuta)         + nl +
+                '%F0%9F%A7%BE *Nota de Entrega:* '    + encodeURIComponent(idNota)         + nl +
+                '%F0%9F%91%A4 *Cliente:* '             + encodeURIComponent(cliente)        + nl +
+                '%F0%9F%93%A6 *Producto:* '            + encodeURIComponent(producto)       + nl +
+                '%F0%9F%94%A2 *Cantidad:* '            + encodeURIComponent(cantidad)       + nl +
+                '%F0%9F%92%B3 *Método de Pago:* '      + encodeURIComponent(pagos)          + nl +
+                '%F0%9F%92%A7 *Bidones Entregados:* '  + encodeURIComponent(bidoEntregados) + nl +
+                '%E2%99%BB%EF%B8%8F *Bidones Recibidos:* ' + encodeURIComponent(bidoRecibidos);
+
+            var urlWA = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msgWA;
+
+            // ── 3. Construir URL de GAS con parámetros GET ───────
+            // Este método funciona desde file://, servidor web y
+            // cualquier hosting porque GAS responde a GET sin CORS.
+            var gasUrl = SCRIPT_URL
+                + '?ID+Ruta='           + encodeURIComponent(idRuta)
+                + '&Id+Nota+Entrega='   + encodeURIComponent(idNota)
+                + '&Cliente='           + encodeURIComponent(cliente)
+                + '&Producto='          + encodeURIComponent(producto)
+                + '&Cantidad='          + encodeURIComponent(cantidad)
+                + '&Pagos='             + encodeURIComponent(pagos)
+                + '&Bidone+Entregados=' + encodeURIComponent(bidoEntregados)
+                + '&Bidone+Recibidos='  + encodeURIComponent(bidoRecibidos);
+
+            // ── 4. Mostrar estado y disparar GAS + WA ────────────
             formulario.style.display = 'none';
             loading.style.display    = 'block';
             btnEnviar.disabled       = true;
+            mostrarMensaje('exito', '✅ ¡Entrega registrada! Abriendo WhatsApp...');
 
-            try {
-                // --------------------------------------------------
-                // 1. Enviar datos al Google Apps Script → Planilla
-                // IMPORTANTE: con mode:'no-cors' Google Apps Script
-                // solo acepta form-urlencoded, no JSON puro.
-                // Usamos URLSearchParams para que lleguen los datos.
-                // --------------------------------------------------
-                const formData = new URLSearchParams();
-                for (const [key, value] of Object.entries(datos)) {
-                    formData.append(key, value);
-                }
+            // Abrir GAS en tab invisible para guardar datos
+            // (window.open con _blank funciona desde file://)
+            var gasWindow = window.open(gasUrl, '_blank',
+                'width=1,height=1,left=-1000,top=-1000');
 
-                await fetch(SCRIPT_URL, {
-                    method : 'POST',
-                    mode   : 'no-cors',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body   : formData.toString()
-                });
-
-                // --------------------------------------------------
-                // 2. Armar mensaje de WhatsApp con los mismos datos
-                // --------------------------------------------------
-                const nl = '%0A'; // salto de línea codificado
-                const mensajeWA =
-                    '🚚 *NUEVO MOVIMIENTO REGISTRADO*'        + nl + nl +
-                    '📍 *ID de Ruta:* '        + datos["ID Ruta"]           + nl +
-                    '🧾 *Nota de Entrega:* '   + datos["Id Nota Entrega"]   + nl +
-                    '👤 *Cliente:* '           + datos["Cliente"]           + nl +
-                    '📦 *Producto:* '          + datos["Producto"]          + nl +
-                    '🔢 *Cantidad:* '          + datos["Cantidad"]          + nl +
-                    '💳 *Método de Pago:* '    + datos["Pagos"]             + nl +
-                    '💧 *Bidones Entregados:* '+ datos["Bidone Entregados"] + nl +
-                    '♻️ *Bidones Recibidos:* ' + datos["Bidone Recibidos"];
-
-                const urlWA = `https://wa.me/${WHATSAPP_NUMBER}?text=${mensajeWA}`;
-
-                mostrarMensaje('exito', '✅ ¡Entrega registrada! Redirigiendo a WhatsApp...');
-
-                // --------------------------------------------------
-                // 3. Redirigir a WhatsApp después de 1.5 s
-                // --------------------------------------------------
-                setTimeout(() => {
-                    window.location.href = urlWA;
-                }, 1500);
-
-            } catch (error) {
-                console.error('Error al enviar:', error);
-                mostrarMensaje('error', '❌ Ocurrió un error al enviar el formulario. Por favor, intentá nuevamente.');
-                loading.style.display    = 'none';
-                formulario.style.display = 'block';
-                btnEnviar.disabled       = false;
-            }
+            // Cerrar la pestaña de GAS después de 3s y abrir WhatsApp
+            setTimeout(function() {
+                try { if (gasWindow) gasWindow.close(); } catch(err) {}
+                window.open(urlWA, '_blank');
+            }, 3000);
         });
 
         function mostrarMensaje(tipo, texto) {
